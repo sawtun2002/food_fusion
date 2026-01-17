@@ -4,39 +4,38 @@ include 'config.php';
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
+// --- Login Check (Redirect အစား Variable ပြောင်းလဲခြင်း) ---
+$is_logged_in = isset($_SESSION['user_id']);
+$user_id = $is_logged_in ? $_SESSION['user_id'] : 0;
+$current_username = "Guest";
+$current_user_img = "";
 
-if (!isset($_SESSION['user_id'])) {
-    header("Location: login.php");
-    exit();
+if ($is_logged_in) {
+    $user_query = $conn->prepare("SELECT username, role, image FROM users WHERE id = ?");
+    $user_query->bind_param("i", $user_id);
+    $user_query->execute();
+    $result = $user_query->get_result();
+
+    if ($row = $result->fetch_assoc()) {
+        $current_username = $row['username'];
+        $current_role = $row['role'];
+        $current_user_img = $row['image'];
+        $_SESSION['username'] = $current_username;
+        $_SESSION['role'] = $current_role;
+        $_SESSION['image'] = $current_user_img;
+    } else {
+        session_destroy();
+        $is_logged_in = false;
+        $user_id = 0;
+    }
 }
 
-$user_id = $_SESSION['user_id'];
-$user_query = $conn->prepare("SELECT username, role, image FROM users WHERE id = ?");
-$user_query->bind_param("i", $user_id);
-$user_query->execute();
-$result = $user_query->get_result();
-
-if ($row = $result->fetch_assoc()) {
-    $current_username = $row['username'];
-    $current_role = $row['role'];
-    $current_user_img = $row['image'];
-    $_SESSION['username'] = $current_username;
-    $_SESSION['role'] = $current_role;
-    $_SESSION['image'] = $current_user_img;
-} else {
-    session_destroy();
-    header("Location: login.php");
-    exit();
-}
-
-// --- Post တင်သည့် Logic (ပြင်ဆင်ပြီး) ---
-if (isset($_POST['submit_post'])) {
+// --- Post တင်သည့် Logic (Login ဝင်မှသာ ရမည်) ---
+if (isset($_POST['submit_post']) && $is_logged_in) {
     $title = $conn->real_escape_string($_POST['title']);
     $desc = $conn->real_escape_string($_POST['description']);
-    $ingredients = $conn->real_escape_string($_POST['ingredients']); // အသစ်ထည့်သွင်းခြင်း
-    $instructions = $conn->real_escape_string($_POST['instructions']); // အသစ်ထည့်သွင်းခြင်း
+    $ingredients = $conn->real_escape_string($_POST['ingredients']);
+    $instructions = $conn->real_escape_string($_POST['instructions']);
     
     $image_name = "";
     if (!empty($_FILES['image']['name'])) {
@@ -44,7 +43,6 @@ if (isset($_POST['submit_post'])) {
         move_uploaded_file($_FILES['image']['tmp_name'], "uploads/" . $image_name);
     }
     
-    // Database Column များနှင့်အညီ Insert လုပ်ခြင်း (Syntax error ကိုပါ ပြင်ဆင်ထားသည်)
     $sql = "INSERT INTO community_recipes (user_id, title, description, image, ingredients, instructions) 
             VALUES ('$user_id', '$title', '$desc', '$image_name', '$ingredients', '$instructions')";
     
@@ -55,7 +53,7 @@ if (isset($_POST['submit_post'])) {
 }
 
 // --- Post ဖျက်သည့် Logic ---
-if (isset($_GET['delete_post'])) {
+if (isset($_GET['delete_post']) && $is_logged_in) {
     $p_id = (int)$_GET['delete_post'];
     $conn->query("DELETE FROM community_recipes WHERE id=$p_id AND user_id=$user_id");
     header("Location: communityCookbook.php");
@@ -63,25 +61,24 @@ if (isset($_GET['delete_post'])) {
 }
 
 // --- Post ပြင်သည့် Logic ---
-if (isset($_POST['update_post'])) {
+if (isset($_POST['update_post']) && $is_logged_in) {
     $p_id = (int)$_POST['post_id'];
     $title = $conn->real_escape_string($_POST['title']);
     $desc = $conn->real_escape_string($_POST['description']);
-    // Update မှာပါ ingredients/instructions ပါဝင်လိုပါက ဤနေရာတွင် ထပ်တိုးနိုင်ပါသည်
     $conn->query("UPDATE community_recipes SET title='$title', description='$desc' WHERE id=$p_id AND user_id=$user_id");
     header("Location: communityCookbook.php");
     exit();
 }
 
-// --- မူရင်း Comment & Like Logic များ ---
-if (isset($_GET['delete_comment'])) {
+// --- Comment & Like Logic (Login ဝင်ထားသူအတွက်သာ) ---
+if (isset($_GET['delete_comment']) && $is_logged_in) {
     $c_id = (int)$_GET['delete_comment'];
     $conn->query("DELETE FROM recipe_comments WHERE id=$c_id AND user_id=$user_id");
     if(isset($_SERVER['HTTP_X_REQUESTED_WITH'])) exit; 
     header("Location: communityCookbook.php"); exit();
 }
 
-if (isset($_GET['like_id'])) {
+if (isset($_GET['like_id']) && $is_logged_in) {
     $r_id = (int)$_GET['like_id'];
     $check_like = $conn->query("SELECT id FROM recipe_likes WHERE user_id=$user_id AND recipe_id=$r_id");
     if ($check_like->num_rows > 0) {
@@ -132,7 +129,8 @@ if (isset($_GET['like_id'])) {
 <div class="container pb-5 mt-5">
     <div class="row justify-content-center">
         <div class="col-lg-8">
-            <div class="card post-box p-3 mb-5 d-flex flex-row align-items-center gap-3" data-bs-toggle="modal" data-bs-target="#postModal">
+            <div class="card post-box p-3 mb-5 d-flex flex-row align-items-center gap-3" 
+                 <?php echo $is_logged_in ? 'data-bs-toggle="modal" data-bs-target="#postModal"' : 'data-bs-toggle="modal" data-bs-target="#loginModal"'; ?>>
                 <div class="profile-ring">
                     <img src="<?php echo (!empty($current_user_img)) ? 'uploads/'.$current_user_img : 'https://cdn-icons-png.flaticon.com/512/149/149071.png'; ?>" width="40" height="40" class="rounded-circle">
                 </div>
@@ -148,7 +146,13 @@ if (isset($_GET['like_id'])) {
                 $rid = $row['id'];
                 $comment_total = $conn->query("SELECT id FROM recipe_comments WHERE recipe_id=$rid")->num_rows;
                 $likes_count = $conn->query("SELECT id FROM recipe_likes WHERE recipe_id=$rid")->num_rows;
-                $is_liked = ($conn->query("SELECT id FROM recipe_likes WHERE user_id=$user_id AND recipe_id=$rid")->num_rows > 0);
+                
+                // Guest အတွက် Like ရှိ/မရှိ စစ်ဆေးခြင်း
+                $is_liked = false;
+                if($is_logged_in) {
+                    $is_liked = ($conn->query("SELECT id FROM recipe_likes WHERE user_id=$user_id AND recipe_id=$rid")->num_rows > 0);
+                }
+                
                 $display_u_img = (!empty($row['u_img']) && file_exists("uploads/".$row['u_img'])) ? "uploads/".$row['u_img'] : "https://cdn-icons-png.flaticon.com/512/149/149071.png";
             ?>
             <div class="card recipe-card p-4" id="recipe-<?php echo $rid; ?>">
@@ -161,7 +165,7 @@ if (isset($_GET['like_id'])) {
                         </div>
                     </div>
 
-                    <?php if($row['user_id'] == $user_id): ?>
+                    <?php if($is_logged_in && $row['user_id'] == $user_id): ?>
                     <div class="dropdown post-options">
                         <button class="btn btn-link dropdown-toggle" type="button" data-bs-toggle="dropdown">
                             <i class="bi bi-three-dots"></i>
@@ -190,7 +194,9 @@ if (isset($_GET['like_id'])) {
                 <?php endif; ?>
 
                 <div class="d-flex gap-4 align-items-center mb-2">
-                    <a href="?like_id=<?php echo $rid; ?>" class="text-decoration-none d-flex align-items-center ajax-like">
+                    <a href="<?php echo $is_logged_in ? '?like_id='.$rid : '#'; ?>" 
+                       class="text-decoration-none d-flex align-items-center <?php echo $is_logged_in ? 'ajax-like' : ''; ?>"
+                       <?php if(!$is_logged_in) echo 'data-bs-toggle="modal" data-bs-target="#loginModal"'; ?>>
                         <i class="bi <?php echo $is_liked ? 'bi-heart-fill active' : 'bi-heart'; ?> heart-icon me-2"></i>
                         <span class="fw-bold like-count <?php echo $is_liked ? 'text-danger' : 'text-muted'; ?>"><?php echo $likes_count; ?> Likes</span>
                     </a>
@@ -212,12 +218,13 @@ if (isset($_GET['like_id'])) {
                                 <span class="time-ago ms-2" data-time="<?php echo $c['created_at']; ?>"></span>
                                 <p class="mb-1 mt-1 small"><?php echo htmlspecialchars($c['comment']); ?></p>
                                 <div class="d-flex">
-                                    <span class="reply-btn small me-3 text-primary" style="cursor:pointer" onclick="toggleReplyForm(<?php echo $cid; ?>)">Reply</span>
-                                    <?php if($c['user_id'] == $user_id): ?>
+                                    <span class="reply-btn small me-3 text-primary" style="cursor:pointer" onclick="<?php echo $is_logged_in ? 'toggleReplyForm('.$cid.')' : ''; ?>" <?php if(!$is_logged_in) echo 'data-bs-toggle="modal" data-bs-target="#loginModal"'; ?>>Reply</span>
+                                    <?php if($is_logged_in && $c['user_id'] == $user_id): ?>
                                         <a href="?delete_comment=<?php echo $cid; ?>" class="delete-btn small ajax-delete text-danger text-decoration-none">Delete</a>
                                     <?php endif; ?>
                                 </div>
                                 
+                                <?php if($is_logged_in): ?>
                                 <form action="post_comment.php" method="POST" id="replyForm<?php echo $cid; ?>" class="mt-2 d-none ajax-comment-form" data-recipe="<?php echo $rid; ?>">
                                     <input type="hidden" name="recipe_id" value="<?php echo $rid; ?>">
                                     <input type="hidden" name="parent_id" value="<?php echo $cid; ?>">
@@ -226,6 +233,7 @@ if (isset($_GET['like_id'])) {
                                         <button type="submit" class="btn btn-sm btn-fancy px-3">Send</button>
                                     </div>
                                 </form>
+                                <?php endif; ?>
 
                                 <?php 
                                 $replies = $conn->query("SELECT rc.*, u.username FROM recipe_comments rc JOIN users u ON rc.user_id = u.id WHERE rc.parent_id=$cid ORDER BY rc.id ASC");
@@ -241,7 +249,10 @@ if (isset($_GET['like_id'])) {
                         <?php endwhile; ?>
                     </div>
                     
-                    <form action="post_comment.php" method="POST" class="d-flex gap-2 ajax-comment-form" data-recipe="<?php echo $rid; ?>">
+                    <form action="post_comment.php" method="POST" 
+                          class="d-flex gap-2 <?php echo $is_logged_in ? 'ajax-comment-form' : ''; ?>" 
+                          data-recipe="<?php echo $rid; ?>"
+                          <?php if(!$is_logged_in) echo 'onclick="event.preventDefault(); var m = new bootstrap.Modal(document.getElementById(\'loginModal\')); m.show();"'; ?>>
                         <input type="hidden" name="recipe_id" value="<?php echo $rid; ?>">
                         <input type="hidden" name="parent_id" value="0">
                         <input type="text" name="comment" class="form-control comment-input" placeholder="Write a comment..." required>
@@ -298,7 +309,6 @@ if (isset($_GET['like_id'])) {
                     <input type="hidden" name="post_id" id="edit_post_id">
                     <input type="text" name="title" id="edit_title" class="form-control mb-3" placeholder="Recipe Title" required style="border-radius: 12px;">
                     <textarea name="description" id="edit_desc" class="form-control mb-3" rows="4" placeholder="Share your recipe details..." required style="border-radius: 12px;"></textarea>
-                    <small class="text-muted">Note: ပုံကို Edit လုပ်ခွင့်မပေးထားပါ (မူရင်းကုတ်မထိခိုက်စေရန်)</small>
                 </div>
                 <div class="modal-footer border-0">
                     <button type="submit" name="update_post" class="btn btn-fancy w-100 py-3">Update Post</button>
@@ -311,6 +321,7 @@ if (isset($_GET['like_id'])) {
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 const currentLoggedInUser = "<?php echo htmlspecialchars($current_username); ?>";
+const isLoggedIn = <?php echo $is_logged_in ? 'true' : 'false'; ?>;
 
 function openEditModal(id, title, desc) {
     document.getElementById('edit_post_id').value = id;
@@ -339,9 +350,14 @@ function updateTimeLabels() {
 setInterval(updateTimeLabels, 1000);
 updateTimeLabels();
 
-function toggleReplyForm(cid) { document.getElementById('replyForm' + cid).classList.toggle('d-none'); }
+function toggleReplyForm(cid) { 
+    if(isLoggedIn) {
+        document.getElementById('replyForm' + cid).classList.toggle('d-none'); 
+    }
+}
 
 document.addEventListener('DOMContentLoaded', function() {
+    // AJAX Like (Login ဝင်ထားမှသာ)
     document.querySelectorAll('.ajax-like').forEach(link => {
         link.addEventListener('click', function(e) {
             e.preventDefault();
@@ -361,6 +377,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
+    // AJAX Comment (Login ဝင်ထားမှသာ)
     document.querySelectorAll('.ajax-comment-form').forEach(form => {
         form.addEventListener('submit', function(e) {
             e.preventDefault();
@@ -390,6 +407,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
+    // AJAX Delete (Login ဝင်ထားမှသာ)
     document.querySelectorAll('.ajax-delete').forEach(link => {
         link.addEventListener('click', function(e) {
             e.preventDefault();
@@ -406,7 +424,9 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
+
 <?php include 'includes/footer.php'; ?>
+<?php include 'includes/login_modal.php'; // Modal အသစ်ထည့်သွင်းခြင်း ?>
 <?php include 'includes/logout_modal.php'; ?>
 </body>
 </html>

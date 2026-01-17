@@ -75,61 +75,7 @@
     </div>
 </nav>
 
-<div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg" style="border-radius: 40px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(15px);">
-            <div class="modal-body p-5">
-                <div class="text-end">
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="text-center mb-4">
-                    <h1 class="brand-logo" style="font-size: 2.2rem; font-weight: 800; color: #1a1a2e;"><i class="bi bi-fire" style="color: #ff5733;"></i> Food<span style="color: #ff5733;">Fusion</span></h1>
-                    <p class="text-muted small fw-bold">EXPERIENCE INTERNATIONAL FLAVORS</p>
-                </div>
-                <ul class="nav nav-pills nav-fill mb-4" id="pills-tab" style="background: rgba(0,0,0,0.05); padding: 5px; border-radius: 30px;">
-                    <li class="nav-item">
-                        <button class="nav-link active rounded-pill fw-bold" data-bs-toggle="pill" data-bs-target="#modal-login-tab">Login</button>
-                    </li>
-                    <li class="nav-item">
-                        <button class="nav-link rounded-pill fw-bold" data-bs-toggle="pill" data-bs-target="#modal-reg-tab">Register</button>
-                    </li>
-                </ul>
-                <div class="tab-content">
-                    <div class="tab-pane fade show active" id="modal-login-tab">
-                        <form action="auth_logic.php" method="POST">
-                            <div class="form-floating mb-3">
-                                <input type="text" name="username" class="form-control rounded-4 border-0 shadow-sm" placeholder="Username" required>
-                                <label><i class="bi bi-person me-2"></i>Username</label>
-                            </div>
-                            <div class="form-floating mb-3">
-                                <input type="password" name="password" class="form-control rounded-4 border-0 shadow-sm" placeholder="Password" required>
-                                <label><i class="bi bi-shield-lock me-2"></i>Password</label>
-                            </div>
-                            <button type="submit" name="login" class="btn w-100 shadow rounded-pill py-3 fw-bold text-white text-uppercase" style="background: linear-gradient(45deg, #ff5733, #ffb347); border: none;">Enter Kitchen</button>
-                        </form>
-                    </div>
-                    <div class="tab-pane fade" id="modal-reg-tab">
-                        <form action="auth_logic.php" method="POST">
-                            <div class="form-floating mb-3">
-                                <input type="text" name="username" class="form-control rounded-4 border-0 shadow-sm" placeholder="Full Name" required>
-                                <label><i class="bi bi-person me-2"></i>Full Name</label>
-                            </div>
-                            <div class="form-floating mb-3">
-                                <input type="email" name="email" class="form-control rounded-4 border-0 shadow-sm" placeholder="Email" required>
-                                <label><i class="bi bi-envelope me-2"></i>Email</label>
-                            </div>
-                            <div class="form-floating mb-4">
-                                <input type="password" name="password" class="form-control rounded-4 border-0 shadow-sm" placeholder="Password" required>
-                                <label><i class="bi bi-key me-2"></i>Create Password</label>
-                            </div>
-                            <button type="submit" name="register" class="btn w-100 shadow rounded-pill py-3 fw-bold text-white text-uppercase" style="background: linear-gradient(45deg, #ff5733, #ffb347); border: none;">Join Community</button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+<?php include 'includes/login_modal.php'  ?>
 
 <style>
     :root { --coral: #ff5733; --honey: #ffb347; }

@@ -2,28 +2,30 @@
 if (session_status() === PHP_SESSION_NONE) { session_start(); }
 include 'config.php';
 
-if (!isset($_SESSION['user_id'])) {
-    header("Location: login.php");
-    exit();
+// ၁။ Login ရှိမရှိ စစ်ဆေးခြင်း (Redirect လုပ်ထားသည်ကို ဖယ်ရှားလိုက်ပါသည်)
+$current_username = "";
+$current_role = "";
+$current_user_img = "";
+
+if (isset($_SESSION['user_id'])) {
+    $user_id = $_SESSION['user_id'];
+    $user_query = $conn->prepare("SELECT username, role, image FROM users WHERE id = ?");
+    $user_query->bind_param("i", $user_id);
+    $user_query->execute();
+    $result = $user_query->get_result();
+
+    if ($row = $result->fetch_assoc()) {
+        $current_username = $row['username'];
+        $current_role = $row['role'];
+        $current_user_img = $row['image']; 
+        
+        $_SESSION['username'] = $current_username;
+        $_SESSION['role'] = $current_role;
+        $_SESSION['image'] = $current_user_img; 
+    }
 }
 
-$user_id = $_SESSION['user_id'];
-$user_query = $conn->prepare("SELECT username, role, image FROM users WHERE id = ?");
-$user_query->bind_param("i", $user_id);
-$user_query->execute();
-$result = $user_query->get_result();
-
-if ($row = $result->fetch_assoc()) {
-    $current_username = $row['username'];
-    $current_role = $row['role'];
-    $current_user_img = $row['image']; 
-    
-    $_SESSION['username'] = $current_username;
-    $_SESSION['role'] = $current_role;
-    $_SESSION['image'] = $current_user_img; 
-}
-
-// Download Logic
+// Download Logic (Login မဝင်ထားလဲ Download လုပ်ခွင့်ပေးထားသည်)
 if (isset($_GET['download'])) {
     $file = basename($_GET['download']);
     $path = "uploads/recipes/" . $file;
@@ -48,17 +50,13 @@ if (isset($_GET['download'])) {
     
     <style>
         :root { --coral: #ff5733; --honey: #ffb347; --navy: #1a1a2e; --cream: #fffdfa; --glass: rgba(255, 255, 255, 0.8); }
-        /* Scoped CSS - Navbar ကို မထိခိုက်စေရန် wrapper ကိုသုံးထားသည် */
         .resource-page-wrapper {
             background-color: #fffdfa;
             font-family: 'Poppins', sans-serif;
             color: #444;
             overflow-x: hidden;
-        }
-
-        .resource-page-wrapper :root { 
-            --coral: #ff5733; 
-            --navy: #1a1a2e; 
+            /* Navbar အောက်ရောက်မသွားစေရန် Padding ထပ်ထည့်ပေးထားပါသည် */
+            padding-top: 20px;
         }
         
         .hero-section { 
@@ -148,7 +146,6 @@ if (isset($_GET['download'])) {
     </div>
 
     <div class="container my-5">
-        
         <div class="mb-5">
             <h3 class="section-title">Cooking Techniques & Tutorials</h3>
             <div class="row g-4">
@@ -242,8 +239,15 @@ if (isset($_GET['download'])) {
         </div>
     </div>
 </div> 
+
 <?php include 'includes/footer.php'; ?>
-<?php include 'includes/logout_modal.php'; ?>
+
+<?php 
+// Login ဝင်ထားမှသာ Logout Modal ကို ထည့်ပေးရန်
+if (isset($_SESSION['user_id'])) {
+    include 'includes/logout_modal.php'; 
+}
+?>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
