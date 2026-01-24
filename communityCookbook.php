@@ -4,7 +4,7 @@ include 'config.php';
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-// --- Login Check (Redirect အစား Variable ပြောင်းလဲခြင်း) ---
+// --- Login Check 
 $is_logged_in = isset($_SESSION['user_id']);
 $user_id = $is_logged_in ? $_SESSION['user_id'] : 0;
 $current_username = "Guest";
@@ -30,7 +30,7 @@ if ($is_logged_in) {
     }
 }
 
-// --- Post တင်သည့် Logic (Login ဝင်မှသာ ရမည်) ---
+// Create Post Logic 
 if (isset($_POST['submit_post']) && $is_logged_in) {
     $title = $conn->real_escape_string($_POST['title']);
     $desc = $conn->real_escape_string($_POST['description']);
@@ -52,7 +52,7 @@ if (isset($_POST['submit_post']) && $is_logged_in) {
     }
 }
 
-// --- Post ဖျက်သည့် Logic ---
+//Delete Post Logic
 if (isset($_GET['delete_post']) && $is_logged_in) {
     $p_id = (int)$_GET['delete_post'];
     $conn->query("DELETE FROM community_recipes WHERE id=$p_id AND user_id=$user_id");
@@ -60,7 +60,7 @@ if (isset($_GET['delete_post']) && $is_logged_in) {
     exit();
 }
 
-// --- Post ပြင်သည့် Logic ---
+// Update Post Logic
 if (isset($_POST['update_post']) && $is_logged_in) {
     $p_id = (int)$_POST['post_id'];
     $title = $conn->real_escape_string($_POST['title']);
@@ -70,7 +70,7 @@ if (isset($_POST['update_post']) && $is_logged_in) {
     exit();
 }
 
-// --- Comment & Like Logic (Login ဝင်ထားသူအတွက်သာ) ---
+// Comment & Like Logic 
 if (isset($_GET['delete_comment']) && $is_logged_in) {
     $c_id = (int)$_GET['delete_comment'];
     $conn->query("DELETE FROM recipe_comments WHERE id=$c_id AND user_id=$user_id");
@@ -94,12 +94,7 @@ if (isset($_GET['like_id']) && $is_logged_in) {
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Community Cookbook | Food Fusion</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    
+    <?php include 'includes/link_and_title.php'; ?>
     <style>
         :root { --coral: #ff5733; --honey: #ffb347; --cream: #fffdfa; }
         body { background-color: var(--cream); font-family: 'Segoe UI', sans-serif; color: #444; }
@@ -120,6 +115,7 @@ if (isset($_GET['like_id']) && $is_logged_in) {
         .post-options .dropdown-toggle::after { display: none; }
         .post-options .btn { color: #888; border-radius: 50%; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; }
         .post-options .btn:hover { background: #eee; }
+        .text-coral { color: var(--coral); }
     </style>
 </head>
 <body>
@@ -147,7 +143,6 @@ if (isset($_GET['like_id']) && $is_logged_in) {
                 $comment_total = $conn->query("SELECT id FROM recipe_comments WHERE recipe_id=$rid")->num_rows;
                 $likes_count = $conn->query("SELECT id FROM recipe_likes WHERE recipe_id=$rid")->num_rows;
                 
-                // Guest အတွက် Like ရှိ/မရှိ စစ်ဆေးခြင်း
                 $is_liked = false;
                 if($is_logged_in) {
                     $is_liked = ($conn->query("SELECT id FROM recipe_likes WHERE user_id=$user_id AND recipe_id=$rid")->num_rows > 0);
@@ -173,7 +168,7 @@ if (isset($_GET['like_id']) && $is_logged_in) {
                         <ul class="dropdown-menu dropdown-menu-end shadow border-0" style="border-radius: 12px;">
                             <li><a class="dropdown-item py-2" href="#" onclick="openEditModal(<?php echo $rid; ?>, '<?php echo addslashes($row['title']); ?>', '<?php echo addslashes($row['description']); ?>')"><i class="bi bi-pencil me-2"></i> Edit Post</a></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item py-2 text-danger" href="?delete_post=<?php echo $rid; ?>" onclick="return confirm('Are you sure to delete this post?')"><i class="bi bi-trash me-2"></i> Delete Post</a></li>
+                            <li><a class="dropdown-item py-2 text-danger" href="?delete_post=<?php echo $rid; ?>" onclick="return confirm('Are you sure you want to delete this post?')"><i class="bi bi-trash me-2"></i> Delete Post</a></li>
                         </ul>
                     </div>
                     <?php endif; ?>
@@ -182,12 +177,21 @@ if (isset($_GET['like_id']) && $is_logged_in) {
                 <h3 class="fw-bold mb-3"><?php echo htmlspecialchars($row['title']); ?></h3>
                 <p class="text-muted mb-4"><?php echo nl2br(htmlspecialchars($row['description'])); ?></p>
                 
-                <?php if(!empty($row['ingredients'])): ?>
-                    <div class="mb-3">
-                        <h6 class="fw-bold text-coral"><i class="bi bi-egg-fried me-2"></i>Ingredients</h6>
-                        <p class="small text-muted"><?php echo nl2br(htmlspecialchars($row['ingredients'])); ?></p>
-                    </div>
-                <?php endif; ?>
+                <div class="row mb-4">
+                    <?php if(!empty($row['ingredients'])): ?>
+                        <div class="col-md-6 mb-3">
+                            <h6 class="fw-bold text-coral"><i class="bi bi-egg-fried me-2"></i>Ingredients</h6>
+                            <p class="small text-muted mb-0"><?php echo nl2br(htmlspecialchars($row['ingredients'])); ?></p>
+                        </div>
+                    <?php endif; ?>
+
+                    <?php if(!empty($row['instructions'])): ?>
+                        <div class="col-md-6 mb-3">
+                            <h6 class="fw-bold text-coral"><i class="bi bi-list-check me-2"></i>Instructions</h6>
+                            <p class="small text-muted mb-0"><?php echo nl2br(htmlspecialchars($row['instructions'])); ?></p>
+                        </div>
+                    <?php endif; ?>
+                </div>
 
                 <?php if(!empty($row['image'])): ?>
                     <img src="uploads/<?php echo $row['image']; ?>" class="recipe-img mb-4 shadow-sm">
@@ -357,7 +361,7 @@ function toggleReplyForm(cid) {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    // AJAX Like (Login ဝင်ထားမှသာ)
+    // like ajax
     document.querySelectorAll('.ajax-like').forEach(link => {
         link.addEventListener('click', function(e) {
             e.preventDefault();
@@ -377,7 +381,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // AJAX Comment (Login ဝင်ထားမှသာ)
+    // Comment ajax
     document.querySelectorAll('.ajax-comment-form').forEach(form => {
         form.addEventListener('submit', function(e) {
             e.preventDefault();
@@ -407,11 +411,11 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // AJAX Delete (Login ဝင်ထားမှသာ)
+    // Delete ajax
     document.querySelectorAll('.ajax-delete').forEach(link => {
         link.addEventListener('click', function(e) {
             e.preventDefault();
-            if(!confirm('ဖျက်မှာ သေချာလား?')) return;
+            if(!confirm('Are you sure you want to delete this?')) return;
             const commentDiv = this.closest('.comment-box, .reply-box');
             const recipeCard = this.closest('.recipe-card');
             const countSpan = recipeCard.querySelector('.c-total');
@@ -426,7 +430,7 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <?php include 'includes/footer.php'; ?>
-<?php include 'includes/login_modal.php'; // Modal အသစ်ထည့်သွင်းခြင်း ?>
+<?php include 'includes/login_modal.php'; ?>
 <?php include 'includes/logout_modal.php'; ?>
 </body>
 </html>

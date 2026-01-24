@@ -1,14 +1,11 @@
 <?php
-// 1. Load Session and Config
 include 'config.php';
 
-// 2. Set Default values (To prevent errors for Guests)
 $is_logged_in = isset($_SESSION['user_id']); 
 $current_username = "Guest";
 $current_role = "user";
 $current_user_img = ""; 
 
-// 3. Fetch User Information from Database only if logged in
 if ($is_logged_in) {
     $user_id = $_SESSION['user_id'];
     $user_query = $conn->prepare("SELECT username, role, image FROM users WHERE id = ?");
@@ -34,11 +31,8 @@ if ($is_logged_in) {
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Food Fusion - Discover International Flavors</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
+    <?php include 'includes/link_and_title.php'; ?>
     <style>
         :root { --coral: #ff5733; --honey: #ffb347; --navy: #1a1a2e; --cream: #fffdfa; --glass: rgba(255, 255, 255, 0.8); }
         body { background-color: var(--cream); font-family: 'Poppins', 'Segoe UI', sans-serif; overflow-x: hidden; color: #333; }
@@ -74,11 +68,33 @@ if ($is_logged_in) {
         }
         .btn-coral { background-color: var(--coral); color: white; }
         .btn-honey { background-color: var(--honey); color: white; }
+
+        /* အသစ်ထည့်ထားသော CSS */
+        .signup-promo-modal .modal-content { border-radius: 30px; border: none; overflow: hidden; }
+        .promo-img { width: 100%; height: 200px; object-fit: cover; }
     </style>
 </head>
 <body>
 
 <?php include 'includes/navbar.php'; ?>
+
+<?php if(!$is_logged_in): ?>
+<div class="modal fade signup-promo-modal" id="autoSignupModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content shadow-lg">
+            <img src="https://img.freepik.com/free-photo/delicious-healthy-food-composition_23-2149115162.jpg" class="promo-img" alt="Delicious Food">
+            <div class="modal-body text-center p-5">
+                <h2 class="fw-bold mb-3">Join FoodFusion Today!</h2>
+                <p class="text-muted mb-4">Register now to unlock exclusive recipes, live masterclasses, and a community of food lovers.</p>
+                <div class="d-grid gap-2">
+                    <button type="button" onclick="openRegisterTab()" class="btn btn-fancy-cart py-3 fs-5">Sign Up Now</button>
+                    <button type="button" class="btn btn-link text-muted text-decoration-none" data-bs-dismiss="modal">Maybe Later</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
 
 <section class="hero-section d-flex align-items-center">
     <div class="container text-center py-5">
@@ -137,15 +153,6 @@ if ($is_logged_in) {
                     <button class="btn btn-coral px-5 rounded-pill fw-bold shadow" <?php echo $is_logged_in ? '' : 'data-bs-toggle="modal" data-bs-target="#loginModal"'; ?>>Secure Your Spot</button>
                 </div>
             </div>
-            <div class="carousel-item">
-                <img src="https://images.unsplash.com/photo-1507048331197-7d4ac70811cf?auto=format&fit=crop&w=1200&q=80" class="d-block w-100">
-                <div class="carousel-caption">
-                    <span class="badge bg-warning text-dark mb-3 px-3 py-2 rounded-pill">WEBINAR</span>
-                    <h2 class="display-5 fw-bold">Sustainable Cooking Trends</h2>
-                    <p class="lead">Expert talk on zero-waste kitchen techniques. <br><strong>Date: Feb 05, 2026</strong></p>
-                    <button class="btn btn-honey px-5 rounded-pill fw-bold shadow text-white" <?php echo $is_logged_in ? '' : 'data-bs-toggle="modal" data-bs-target="#loginModal"'; ?>>Join Webinar</button>
-                </div>
-            </div>
         </div>
         <button class="carousel-control-prev" type="button" data-bs-target="#eventCarousel" data-bs-slide="prev"><span class="carousel-control-prev-icon"></span></button>
         <button class="carousel-control-next" type="button" data-bs-target="#eventCarousel" data-bs-slide="next"><span class="carousel-control-next-icon"></span></button>
@@ -186,42 +193,6 @@ if ($is_logged_in) {
     </div>
 </div>
 
-<div class="container my-5 py-5">
-    <h3 class="text-center fw-bold mb-5">Trusted by Thousands</h3>
-    <div class="row g-4 pt-4">
-        <div class="col-md-4">
-            <div class="card testimonial-card shadow-sm text-center px-3 pb-3 border-0 rounded-4">
-                <div class="card-body">
-                    <img src="https://i.pravatar.cc/150?u=1" class="shadow-lg mb-3" style="width: 80px; height: 80px; border-radius: 50%; margin-top: -50px; object-fit: cover;">
-                    <p class="text-muted italic mb-4">"The taste is truly unique. I absolutely loved the perfect blend of fusion flavors."</p>
-                    <h6 class="fw-bold mb-1">Ma Thida</h6>
-                    <div class="text-warning small"><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i></div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card testimonial-card shadow-sm text-center px-3 pb-3 border-0 rounded-4">
-                <div class="card-body">
-                    <img src="https://i.pravatar.cc/150?u=2" class="shadow-lg mb-3" style="width: 80px; height: 80px; border-radius: 50%; margin-top: -50px; object-fit: cover;">
-                    <p class="text-muted italic mb-4">"The recipes are clear and easy to follow. I feel like a Master Chef right at my home!"</p>
-                    <h6 class="fw-bold mb-1">Ko Aung Myo</h6>
-                    <div class="text-warning small"><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i></div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card testimonial-card shadow-sm text-center px-3 pb-3 border-0 rounded-4">
-                <div class="card-body">
-                    <img src="https://i.pravatar.cc/150?u=3" class="shadow-lg mb-3" style="width: 80px; height: 80px; border-radius: 50%; margin-top: -50px; object-fit: cover;">
-                    <p class="text-muted italic mb-4">"I really appreciate the focus on healthy living. It's perfectly suitable for the kids as well."</p>
-                    <h6 class="fw-bold mb-1">Daw Hla</h6>
-                    <div class="text-warning small"><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-half"></i></div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
 <div class="container mb-5 pb-5">
     <div class="newsletter-section text-center shadow-lg">
         <div class="row justify-content-center">
@@ -248,10 +219,38 @@ if ($is_logged_in) {
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
+    function openRegisterTab() {
+        
+        var promoModalElement = document.getElementById('autoSignupModal');
+        var promoModal = bootstrap.Modal.getInstance(promoModalElement);
+        if(promoModal) promoModal.hide();
+
+    
+        var loginModalElement = document.getElementById('loginModal');
+        var loginModal = new bootstrap.Modal(loginModalElement);
+        loginModal.show();
+
+        
+        loginModalElement.addEventListener('shown.bs.modal', function () {
+            var regTabTrigger = document.querySelector('#modal-reg-tab');
+            if(regTabTrigger) {
+                bootstrap.Tab.getInstance(regTabTrigger)?.show() || new bootstrap.Tab(regTabTrigger).show();
+            }
+        }, { once: true });
+    }
+
     window.addEventListener('load', function() {
         <?php if(isset($_SESSION['msg'])): ?>
-            var myModal = new bootstrap.Modal(document.getElementById('loginModal'));
-            myModal.show();
+            var myLoginModal = new bootstrap.Modal(document.getElementById('loginModal'));
+            myLoginModal.show();
+        <?php endif; ?>
+
+        
+        <?php if(!$is_logged_in): ?>
+            setTimeout(function() {
+                var signupPromo = new bootstrap.Modal(document.getElementById('autoSignupModal'));
+                signupPromo.show();
+            }, 2000);
         <?php endif; ?>
     });
 </script>

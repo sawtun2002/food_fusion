@@ -2,9 +2,10 @@
 if (session_status() === PHP_SESSION_NONE) { session_start(); }
 include 'config.php';
 
-// --- Login ဝင်ထားမှသာ Profile Data ကို Database မှ ယူမည် ---
+// --- Fetch Profile Data from Database only if Logged In ---
 $current_username = "";
 $current_user_img = "";
+$current_role = ""; 
 
 if (isset($_SESSION['user_id'])) {
     $user_id = $_SESSION['user_id'];
@@ -65,7 +66,7 @@ if ($difficulty != 'Any Difficulty') {
 
 $where_sql = implode(" AND ", $where_clauses);
 
-// 1. Count total records
+// 1. Count total records for pagination
 $count_sql = "SELECT COUNT(*) FROM recipes WHERE $where_sql";
 $count_stmt = $conn->prepare($count_sql);
 if (!empty($params)) {
@@ -75,7 +76,7 @@ $count_stmt->execute();
 $total_results = $count_stmt->get_result()->fetch_row()[0];
 $total_pages = ceil($total_results / $limit);
 
-// 2. Fetch records
+// 2. Fetch filtered records
 $sql = "SELECT * FROM recipes WHERE $where_sql ORDER BY id DESC LIMIT ? OFFSET ?";
 $stmt = $conn->prepare($sql);
 $final_params = $params;
@@ -86,6 +87,7 @@ $stmt->bind_param($final_types, ...$final_params);
 $stmt->execute();
 $result = $stmt->get_result();
 
+// Function to generate dynamic URL for pagination
 function getPageUrl($p) {
     $params = $_GET;
     $params['page'] = $p;
@@ -96,16 +98,11 @@ function getPageUrl($p) {
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Global Recipe Collection | Food Fusion</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+<?php include 'includes/link_and_title.php'; ?>
     <style>
         :root { --coral: #ff5733; --honey: #ffb347; --cream: #fffdfa; --dark-blue: #1a2a3a; }
         body { background-color: var(--cream); font-family: 'Segoe UI', sans-serif; }
         
-        /* Original UI Retained */
         .hero-banner {
             background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('https://images.unsplash.com/photo-1490818387583-1baba5e638af?auto=format&fit=crop&w=1350&q=80');
             background-size: cover; background-position: center; color: white; padding: 100px 0; border-radius: 0 0 40px 40px;
@@ -132,11 +129,9 @@ function getPageUrl($p) {
         .btn-search-premium { background: var(--dark-blue); color: white; border-radius: 10px; padding: 10px 30px; font-weight: 600; border: none; transition: 0.3s; }
         .btn-search-premium:hover { background: #000; transform: scale(1.02); }
 
-        /* Recipe Card Styles */
         .recipe-card { border: none; border-radius: 20px; transition: 0.3s; background: white; overflow: hidden; height: 100%; box-shadow: 0 5px 15px rgba(0,0,0,0.05); position: relative;}
         .recipe-card:hover { transform: translateY(-10px); box-shadow: 0 15px 30px rgba(0,0,0,0.1); }
         
-        /* Container for image to handle fallback background */
         .img-container { height: 200px; width: 100%; background: #e9ecef; display: flex; align-items: center; justify-content: center; overflow: hidden; }
         .recipe-img { height: 100%; width: 100%; object-fit: cover; display: block; }
         
@@ -144,10 +139,31 @@ function getPageUrl($p) {
         .difficulty-Easy { background: #d1e7dd; color: #0f5132; }
         .difficulty-Intermediate { background: #fff3cd; color: #856404; }
         .difficulty-Advanced { background: #f8d7da; color: #842029; }
+
+        /* Edit Button Style for Admin */
+        .btn-edit-admin { 
+            position: absolute; top: 15px; left: 15px; z-index: 11;
+            background: rgba(255, 255, 255, 0.9); color: var(--dark-blue);
+            border-radius: 10px; width: 35px; height: 35px; 
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1); transition: 0.3s;
+        }
+        .btn-edit-admin:hover { background: var(--dark-blue); color: white; transform: scale(1.1); }
+
         .text-coral { color: var(--coral); }
         .btn-view { background: var(--coral); color: white; border-radius: 30px; padding: 8px 25px; font-weight: 600; font-size: 0.85rem; }
 
-        /* Pagination New Design (Matching Page) */
+        /* Admin Floating Action Button (FAB) */
+        .admin-fab {
+            position: fixed; bottom: 30px; right: 30px;
+            background: var(--dark-blue); color: white;
+            width: 60px; height: 60px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            text-decoration: none; transition: 0.3s; z-index: 999;
+        }
+        .admin-fab:hover { background: var(--coral); color: white; transform: scale(1.1) rotate(90deg); }
+
         .pagination .page-link { color: var(--dark-blue); border-radius: 10px; margin: 0 3px; border: none; background: #fff; font-weight: 600; transition: 0.2s; }
         .pagination .page-item.active .page-link { background-color: var(--coral) !important; color: white !important; box-shadow: 0 4px 10px rgba(255, 87, 51, 0.3); }
         .pagination .page-link:hover:not(.active) { background-color: #fcece9; color: var(--coral); }
@@ -156,6 +172,12 @@ function getPageUrl($p) {
 <body>
 
 <?php include 'includes/navbar.php'; ?>
+
+<?php if(isset($current_role) && $current_role === 'admin'): ?>
+    <a href="admin_add_recipe.php" class="admin-fab" title="Add New Recipe">
+        <i class="bi bi-plus-lg fs-3"></i>
+    </a>
+<?php endif; ?>
 
 <div class="hero-banner text-center">
     <div class="container">
@@ -219,7 +241,6 @@ function getPageUrl($p) {
                     </a>
                 </div>
             </div>
-            <button class="btn btn-search-premium w-100 mt-3 d-md-none" type="submit">Search Now</button>
         </form>
     </div>
 
@@ -236,6 +257,12 @@ function getPageUrl($p) {
             <?php while($row = $result->fetch_assoc()): ?>
                 <div class="col-md-6 col-lg-4">
                     <div class="card recipe-card">
+                        <?php if(isset($current_role) && $current_role === 'admin'): ?>
+                            <a href="admin_edit_recipe.php?id=<?php echo $row['id']; ?>" class="btn-edit-admin" title="Edit Recipe">
+                                <i class="bi bi-pencil-fill"></i>
+                            </a>
+                        <?php endif; ?>
+
                         <span class="badge-difficulty difficulty-<?php echo $row['difficulty']; ?>">
                             <?php echo $row['difficulty']; ?>
                         </span>
@@ -243,8 +270,7 @@ function getPageUrl($p) {
                         <div class="img-container">
                             <?php if(!empty($row['image_url'])): ?>
                                 <img src="<?php echo htmlspecialchars($row['image_url']); ?>" 
-                                     class="recipe-img" 
-                                     alt="recipe" 
+                                     class="recipe-img" alt="recipe" 
                                      onerror="this.style.display='none'; this.parentElement.innerHTML='<i class=\'bi bi-image text-muted display-6\'></i>';">
                             <?php else: ?>
                                 <i class="bi bi-image text-muted display-6"></i>

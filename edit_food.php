@@ -1,13 +1,13 @@
 <?php 
 include 'config.php';
 
-// ၁။ Admin ဟုတ်မဟုတ် စစ်ဆေးခြင်း
+
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
     header("Location: login.php");
     exit();
 }
 
-// ၂။ ပြင်ဆင်မည့် Food Item ကို Database မှ ဆွဲထုတ်ခြင်း
+
 if (isset($_GET['id'])) {
     $id = $_GET['id'];
     $stmt = $conn->prepare("SELECT * FROM foods WHERE id = ?");
@@ -20,7 +20,7 @@ if (isset($_GET['id'])) {
     }
 }
 
-// ၃။ Update Logic (Form Submit လုပ်သည့်အခါ)
+
 if (isset($_POST['update_food'])) {
     $id = $_POST['id'];
     $name = htmlspecialchars($_POST['name']);
@@ -28,12 +28,12 @@ if (isset($_POST['update_food'])) {
     $cat = htmlspecialchars($_POST['category']);
     $old_image = $_POST['old_image'];
 
-    // ပုံအသစ်တင်မတင် စစ်ဆေးခြင်း
+    
     if (!empty($_FILES['image']['name'])) {
         $img_name = time() . "_" . $_FILES['image']['name'];
         move_uploaded_file($_FILES['image']['tmp_name'], "uploads/" . $img_name);
     } else {
-        $img_name = $old_image; // ပုံအသစ်မတင်ရင် နဂိုပုံကိုပဲ သုံးမယ်
+        $img_name = $old_image; 
     }
 
     $update = $conn->prepare("UPDATE foods SET name=?, price=?, category=?, image=? WHERE id=?");
@@ -88,7 +88,7 @@ if (isset($_POST['update_food'])) {
                             <label class="form-label fw-bold">Current Image</label><br>
                             <img src="uploads/<?php echo $food['image']; ?>" width="100" class="rounded mb-2 shadow-sm">
                             <input type="file" name="image" class="form-control" accept="image/*">
-                            <small class="text-muted">ပုံအသစ်မပြောင်းလိုပါက အလွတ်ထားခဲ့ပါ။</small>
+                            <small class="text-muted">Leave empty if you don't change။</small>
                         </div>
 
                         <div class="d-flex gap-2">

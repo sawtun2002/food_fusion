@@ -11,14 +11,22 @@ $user_id = $_SESSION['user_id'];
 $msg = "";
 $msg_type = "";
 
-// ၁။ လက်ရှိ User Data ကို ဆွဲယူခြင်း
-$query = $conn->prepare("SELECT username, email, image, password FROM users WHERE id = ?");
+// ၁။ လက်ရှိ User အချက်အလက်များကို Database မှ ဆွဲယူခြင်း
+$query = $conn->prepare("SELECT username, email, image, password, role FROM users WHERE id = ?");
 $query->bind_param("i", $user_id);
 $query->execute();
 $result = $query->get_result();
 
 if ($result->num_rows > 0) {
     $user_data = $result->fetch_assoc();
+    
+    // Navbar မှာ ပေါ်ဖို့အတွက် Session ပြန်သတ်မှတ်ပေးခြင်း (ဒါမှ Profile နေရာမှာ နာမည်ချက်ချင်းပြောင်းမှာပါ)
+    $_SESSION['username'] = $user_data['username'];
+    $_SESSION['image'] = $user_data['image'];
+    $_SESSION['role'] = $user_data['role'];
+
+    $current_username = $user_data['username'];
+    $current_user_img = $user_data['image'];
 } else {
     session_destroy();
     header("Location: index.php");
@@ -77,11 +85,10 @@ if (isset($_POST['update_profile'])) {
     }
 
     if (!$update_error && isset($stmt) && $stmt->execute()) {
-        // Navbar မှာ ချက်ချင်း Update ဖြစ်စေရန် Session ကို Update လုပ်ခြင်း
+        // Update Session for Navbar immediately
         $_SESSION['username'] = $new_user;
         $_SESSION['image'] = $new_image;
 
-        // လက်ရှိ Form ထဲတွင် ပြရန် Variable များကို Update လုပ်ခြင်း
         $user_data['username'] = $new_user;
         $user_data['email'] = $new_email;
         $user_data['image'] = $new_image;
@@ -89,6 +96,10 @@ if (isset($_POST['update_profile'])) {
 
         $msg = "Profile updated successfully!";
         $msg_type = "success";
+        
+        // Refresh Current Variables
+        $current_username = $new_user;
+        $current_user_img = $new_image;
     }
 }
 ?>
@@ -96,14 +107,12 @@ if (isset($_POST['update_profile'])) {
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>User Settings | Food Fusion</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+<?php
+$current_role = isset($_SESSION['role']) ? $_SESSION['role'] : '';
+include 'includes/link_and_title.php'; ?>
     <style>
         :root { --coral: #ff5733; --honey: #ffb347; --cream: #fffdfa; }
-        body { background-color: var(--cream); font-family: 'Segoe UI', sans-serif; color: #444; }
+        body { background-color: var(--cream); color: #444; }
         .btn-fancy { background: var(--coral); color: white; border-radius: 30px; border: none; padding: 12px 30px; font-weight: 600; transition: 0.3s; }
         .btn-fancy:hover { background: #e44d2d; transform: translateY(-2px); color: white; }
         .settings-card { border-radius: 25px; border: none; background: white; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
@@ -118,7 +127,11 @@ if (isset($_POST['update_profile'])) {
 </head>
 <body>
 
-<?php include 'includes/navbar.php'; ?>
+<?php 
+// Navbar မှာ $current_username နဲ့ $current_user_img ကို သုံးထားရင် 
+// Navbar မတိုင်ခင် ဒီ Variables တွေကို သတ်မှတ်ပေးထားတာ ဖြစ်ပါတယ်။
+include 'includes/navbar.php'; 
+?>
 
 <div class="container mt-5 pt-4 mb-5">
     <div class="row justify-content-center">

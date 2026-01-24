@@ -49,6 +49,7 @@
                                 <input type="text" name="username" class="form-control rounded-4 border-0 shadow-sm custom-input" id="modalLogUser" placeholder="Username or Email" required>
                                 <label for="modalLogUser"><i class="bi bi-person me-2"></i>Username or Email</label>
                             </div>
+
                             <div class="form-floating mb-3">
                                 <input type="password" name="password" class="form-control rounded-4 border-0 shadow-sm custom-input" id="modalLogPass" placeholder="Password" required>
                                 <label for="modalLogPass"><i class="bi bi-shield-lock me-2"></i>Password</label>
@@ -93,7 +94,7 @@
                                 <input type="password" name="password" 
                                        class="form-control rounded-4 border-0 shadow-sm custom-input" 
                                        id="modalRegPass" placeholder="Password" 
-                                       pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$"
+                                       pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/"
                                        title="Must be at least 8 characters, with uppercase, lowercase, numbers, and symbols."
                                        required>
                                 <label for="modalRegPass"><i class="bi bi-key me-2"></i>Create Password</label>
@@ -152,15 +153,25 @@
 
 <script>
     (function() {
-        // --- Login Lock Timer ---
+        // Updated Timer Logic for Minutes and Seconds
         const lockTime = <?php echo $lock_duration; ?>;
         if (lockTime > 0) {
             let remaining = lockTime;
             const btn = document.getElementById('modalLoginBtn');
             const btnText = document.getElementById('modalBtnText');
+            
             const timer = setInterval(() => {
                 remaining--;
-                if (btnText) btnText.innerText = `Please wait ${remaining}s...`;
+                
+                // Minutes and Seconds calculation
+                const mins = Math.floor(remaining / 60);
+                const secs = remaining % 60;
+                
+                // Formatting time text
+                let timeDisplay = (mins > 0) ? `${mins}m ${secs}s` : `${secs}s`;
+                
+                if (btnText) btnText.innerText = `Please wait ${timeDisplay}...`;
+                
                 if (remaining <= 0) {
                     clearInterval(timer);
                     if (btn) btn.disabled = false;
@@ -169,7 +180,6 @@
             }, 1000);
         }
 
-        // --- Confirm Password Validation ---
         const password = document.getElementById("modalRegPass");
         const confirmPassword = document.getElementById("modalRegConfirmPass");
         const matchText = document.getElementById("passwordMatchText");
@@ -182,11 +192,11 @@
                 return;
             }
             if (password.value !== confirmPassword.value) {
-                matchText.innerText = "❌ Passwords do not match";
+                matchText.innerText = " Passwords do not match";
                 matchText.style.color = "#dc3545";
                 submitBtn.disabled = true;
             } else {
-                matchText.innerText = "✅ Passwords match";
+                matchText.innerText = "Passwords match";
                 matchText.style.color = "#198754";
                 submitBtn.disabled = false;
             }

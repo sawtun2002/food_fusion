@@ -53,11 +53,11 @@ if (isset($_GET['download'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Educational Resources | FoodFusion</title>
+    <title>FoodFusion</title>
     
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23ff5733'><path d='M8 16c3.314 0 6-2 6-5.5 0-1.5-.5-4-2.5-6 .25 1.5-1.25 2-1.25 2C11 4 9 .5 6 0c.357 2 .5 4-2 6-1.25 1-2 2.729-2 4.5C2 14 4.686 16 8 16Zm0-1c-1.657 0-3-1-3-2.75 0-.75.25-2 1.25-3C6.125 10 7 10.5 7 10.5c-.375-1.25.5-3.25 2-3.5-.179 1-.25 2 1 3 .625.5 1 1.364 1 2.25C11 14 9.657 15 8 15Z'/></svg>">
     
     <script type="module" src="https://unpkg.com/@splinetool/viewer@1.9.54/build/spline-viewer.js"></script>
 
@@ -105,6 +105,31 @@ if (isset($_GET['download'])) {
             height: 400px;
             position: relative;
         }
+
+        .calc-input { border-radius: 12px; border: 2px solid #eee; padding: 12px; margin-bottom: 15px; }
+        .calc-input:focus { border-color: var(--coral); box-shadow: none; }
+        .accordion-button:not(.collapsed) { background-color: #fff5f2; color: var(--coral); }
+        .farming-badge { position: absolute; top: 20px; right: 20px; border-radius: 10px; }
+
+        .scrollable-table-body {
+            display: block;
+            max-height: 450px; 
+            overflow-y: auto;
+            width: 100%;
+        }
+        .scrollable-table-body tr {
+            display: table;
+            width: 100%;
+            table-layout: fixed; 
+        }
+        thead.fixed-header {
+            display: table;
+            width: 100%;
+            table-layout: fixed;
+        }
+        .scrollable-table-body::-webkit-scrollbar { width: 6px; }
+        .scrollable-table-body::-webkit-scrollbar-thumb { background: var(--coral); border-radius: 10px; }
+        .scrollable-table-body::-webkit-scrollbar-track { background: #f8f9fa; }
     </style>
 </head>
 <body>
@@ -130,6 +155,54 @@ if (isset($_GET['download'])) {
     </div>
 
     <div class="container my-5 pb-5" id="resources">
+        
+        <div class="mb-5 py-4">
+            <h3 class="title-border">Biogas Energy Insights</h3>
+            <div class="row g-4">
+                <div class="col-lg-7">
+                    <div class="edu-card p-4">
+                        <div class="row align-items-center">
+                            <div class="col-md-6">
+                                <h5>Waste-to-Energy Estimator</h5>
+                                <p class="text-muted small">Calculate how much biogas you can produce from your daily organic waste.</p>
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Daily Organic Waste (kg)</label>
+                                    <input type="number" id="wasteInput" class="form-control calc-input" placeholder="e.g. 5">
+                                </div>
+                                <button onclick="calculateEnergy()" class="btn btn-download-pro w-100">Calculate Potential</button>
+                            </div>
+                            <div class="col-md-6 text-center border-start mt-4 mt-md-0">
+                                <div id="calcResult" style="display: none;">
+                                    <h2 class="text-coral fw-bold mb-0"><span id="gasOutput">0</span> m³</h2>
+                                    <p class="text-muted">Potential Biogas/Day</p>
+                                    <hr>
+                                    <p class="mb-1"><i class="bi bi-fire me-2 text-warning"></i>Equivalent to <strong><span id="cookingTime">0</span> hours</strong> of cooking</p>
+                                </div>
+                                <div id="calcPlaceholder">
+                                    <i class="bi bi-calculator display-1 text-light"></i>
+                                    <p class="text-muted">Enter waste amount to see results</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-5">
+                    <div class="edu-card p-4 bg-light shadow-none border">
+                        <h5 class="fw-bold mb-3"><i class="bi bi-diagram-3-fill me-2 text-coral"></i>The Biogas Process</h5>
+                        
+                        <div class="mt-3 small">
+                            <ul class="list-unstyled">
+                                <li class="mb-2"><i class="bi bi-1-circle-fill text-coral me-2"></i><strong>Input:</strong> Organic waste (food, manure).</li>
+                                <li class="mb-2"><i class="bi bi-2-circle-fill text-coral me-2"></i><strong>Digestion:</strong> Bacteria break down waste without oxygen.</li>
+                                <li class="mb-2"><i class="bi bi-3-circle-fill text-coral me-2"></i><strong>Output:</strong> Methane gas (energy) and organic fertilizer.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="mb-5 mt-4">
             <h3 class="title-border">Educational Video Series</h3>
             <div class="row g-4">
@@ -137,7 +210,7 @@ if (isset($_GET['download'])) {
                     <div class="edu-card p-4">
                         <div class="video-box mb-3">
                             <div class="video-aspect">
-                                <iframe src="https://youtu.be/eJO5HU_7_1w?si=CIQZWPOS5x4sS6Ex" 
+                                <iframe src="https://www.youtube.com/embed/Ofn7jqPDTeY" 
                                         title="Solar Cooking Technology"
                                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
                                         allowfullscreen></iframe>
@@ -151,7 +224,7 @@ if (isset($_GET['download'])) {
                     <div class="edu-card p-4">
                         <div class="video-box mb-3">
                             <div class="video-aspect">
-                                <iframe src="https://www.youtube.com/embed/7YpT_LqGid4?rel=0" 
+                                <iframe src="https://www.youtube.com/embed/alljc5elqqw" 
                                         title="Biogas Technology"
                                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
                                         allowfullscreen></iframe>
@@ -159,6 +232,48 @@ if (isset($_GET['download'])) {
                         </div>
                         <h5 class="fw-bold">Biogas: Turning Waste to Wealth</h5>
                         <p class="text-muted small">Converting organic waste into energy.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-5 py-4">
+            <h3 class="title-border">Seasonal Farming Guide (Myanmar)</h3>
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="edu-card p-4 position-relative">
+                        <span class="badge bg-primary farming-badge">Rainy Season</span>
+                        <div class="topic-icon bg-primary-subtle text-primary"><i class="bi bi-cloud-rain-heavy-fill fs-3"></i></div>
+                        <h5 class="fw-bold">Monsoon Crops</h5>
+                        <ul class="small text-muted ps-3">
+                            <li>Rice (Paddy)</li>
+                            <li>Corn (Maize)</li>
+                            <li>Green Gram</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="edu-card p-4 position-relative">
+                        <span class="badge bg-warning text-dark farming-badge">Summer Season</span>
+                        <div class="topic-icon bg-warning-subtle text-warning"><i class="bi bi-brightness-high-fill fs-3"></i></div>
+                        <h5 class="fw-bold">Dry Season Crops</h5>
+                        <ul class="small text-muted ps-3">
+                            <li>Sesame</li>
+                            <li>Peanuts</li>
+                            <li>Sunflowers</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="edu-card p-4 position-relative">
+                        <span class="badge bg-info text-dark farming-badge">Winter Season</span>
+                        <div class="topic-icon bg-info-subtle text-info"><i class="bi bi-snow2 fs-3"></i></div>
+                        <h5 class="fw-bold">Cool Season Crops</h5>
+                        <ul class="small text-muted ps-3">
+                            <li>Wheat</li>
+                            <li>Chickpeas</li>
+                            <li>Potatoes</li>
+                        </ul>
                     </div>
                 </div>
             </div>
@@ -191,16 +306,20 @@ if (isset($_GET['download'])) {
             </div>
         </div>
 
-        <div class="row g-4">
+        <div class="row g-4 mb-5">
             <div class="col-lg-8">
                 <h3 class="title-border">Technical Guides & Manuals</h3>
                 <div class="edu-card overflow-hidden">
                     <div class="table-responsive">
                         <table class="table table-hover align-middle mb-0">
-                            <thead class="bg-light">
-                                <tr><th class="ps-4">Resource Title</th><th>Format</th><th class="text-end pe-4">Download</th></tr>
+                            <thead class="bg-light fixed-header">
+                                <tr>
+                                    <th class="ps-4">Resource Title</th>
+                                    <th>Format</th>
+                                    <th class="text-end pe-4">Download</th>
+                                </tr>
                             </thead>
-                            <tbody>
+                            <tbody class="scrollable-table-body">
                                 <?php
                                 $res_query = $conn->query("SELECT * FROM educational_resources ORDER BY id DESC");
                                 if($res_query && $res_query->num_rows > 0):
@@ -276,12 +395,97 @@ if (isset($_GET['download'])) {
                 </div>
             </div>
         </div>
+
+        <div class="mb-5 py-4">
+            <h3 class="title-border">Common Questions (FAQ)</h3>
+            <div class="accordion border-0 shadow-sm rounded-4 overflow-hidden" id="faqAccordion">
+                <div class="accordion-item border-0 border-bottom">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                            How much waste is needed for a household biogas digester?
+                        </button>
+                    </h2>
+                    <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body text-muted">
+                            For a small family, about 5-10kg of daily organic waste (kitchen scraps + livestock waste) can produce enough gas for 2-3 hours of cooking.
+                        </div>
+                    </div>
+                </div>
+                <div class="accordion-item border-0 border-bottom">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                            Can I use solar drying for all types of crops?
+                        </button>
+                    </h2>
+                    <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body text-muted">
+                            Most fruits, vegetables, and grains can be solar dried. However, the drying time varies. High-water content items like tomatoes require better ventilation.
+                        </div>
+                    </div>
+                </div>
+                <div class="accordion-item border-0 border-bottom">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+                            Is the leftover waste from a biogas digester useful?
+                        </button>
+                    </h2>
+                    <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body text-muted">
+                            Yes! The byproduct (slurry) is an excellent, nutrient-rich organic fertilizer that is even better than raw manure for your crops.
+                        </div>
+                    </div>
+                </div>
+                <div class="accordion-item border-0 border-bottom">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#faq4">
+                            What is the best time for organic composting?
+                        </button>
+                    </h2>
+                    <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body text-muted">
+                            Composting can be done year-round, but it works fastest in warmer months because heat helps the bacteria break down the waste more quickly.
+                        </div>
+                    </div>
+                </div>
+                <div class="accordion-item border-0 border-bottom">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#faq5">
+                            How do I prevent pests in my seasonal garden?
+                        </button>
+                    </h2>
+                    <div id="faq5" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body text-muted">
+                            Use natural methods like crop rotation, intercropping (planting different crops together), and organic neem oil sprays to keep pests away without chemicals.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 </div>
 
 <?php include 'includes/footer.php'; ?>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    function calculateEnergy() {
+        const waste = document.getElementById('wasteInput').value;
+        if(waste > 0) {
+            document.getElementById('calcPlaceholder').style.display = 'none';
+            document.getElementById('calcResult').style.display = 'block';
+            
+            const output = (waste * 0.05).toFixed(2);
+            const time = (output * 2).toFixed(1);
+            
+            document.getElementById('gasOutput').innerText = output;
+            document.getElementById('cookingTime').innerText = time;
+        } else {
+            alert("Please enter a valid amount of waste.");
+        }
+    }
+</script>
 
 </body>
 </html>
